@@ -3,625 +3,444 @@ summary: Portfolio AI Performance & Benchmarking Dashboard Documentation
 feedback link: https://docs.google.com/forms/d/e/1FAIpQLSfWkOK-in_bMMoHSZfcIvAeO58PAH9wrDqcxnJABHaxiDqhSA/viewform?usp=sf_link
 environments: Web
 status: Published
-# QuLab: Building an AI Performance & Benchmarking Dashboard for Private Equity
+# QuLab: AI Performance & Benchmarking Dashboard for Private Equity
 
-## Introduction: Optimizing AI Value Creation in Private Equity
-Duration: 0:10:00
+## 1. Introduction: Empowering PE Portfolio Managers with AI Analytics
+Duration: 0:05:00
 
-<aside class="positive">
-This codelab is designed for developers who want to understand how to build a comprehensive analytics application using Streamlit. It focuses on a real-world use case in Private Equity (PE), demonstrating how AI performance can be quantified, benchmarked, and used to drive strategic decision-making. You will learn about data generation, complex metric calculation, interactive visualizations, and generating actionable insights.
-</aside>
+Welcome to the QuLab AI Performance & Benchmarking Dashboard! This codelab provides a comprehensive guide to understanding and utilizing a Streamlit application designed for Private Equity (PE) Portfolio Managers. In today's rapidly evolving landscape, Artificial Intelligence (AI) is no longer a niche technology but a critical driver of value, efficiency, and competitive advantage across diverse industries. For PE funds, systematically quantifying and managing AI's impact across a portfolio is paramount to optimizing returns and ensuring successful exits.
 
-Welcome to QuLab, where you'll explore a powerful Streamlit application designed for Private Equity (PE) Portfolio Managers. In today's competitive landscape, Artificial Intelligence (AI) is no longer a luxury but a critical driver of value creation, operational efficiency, and enhanced exit valuations for portfolio companies. However, quantifying the impact of AI and identifying areas for strategic intervention remains a significant challenge.
+This application offers a structured, data-driven framework to:
+*   **Assess AI Maturity:** Quantify each portfolio company's AI readiness (Org-AI-R Score).
+*   **Benchmark Performance:** Compare companies against peers and industry standards.
+*   **Quantify Financial Impact:** Attribute EBITDA growth and evaluate the efficiency of AI investments.
+*   **Track Progress:** Monitor AI evolution and investment effectiveness over time.
+*   **Identify Actionable Insights:** Pinpoint "Centers of Excellence" for best practice dissemination and "Companies for Review" needing strategic intervention.
+*   **Enhance Exit Strategy:** Evaluate how AI capabilities influence exit readiness and potential valuation multiples.
 
-This application provides an end-to-end framework to tackle this challenge. It allows a Portfolio Manager to:
-*   **Systematically assess** the AI readiness of portfolio companies.
-*   **Benchmark** their performance against peers and industry standards.
-*   **Quantify the financial impact** and efficiency of AI investments.
-*   **Track progress** over time to monitor strategic initiatives.
-*   **Identify 'Centers of Excellence'** for scaling best practices and 'Companies for Review' requiring intervention.
-*   **Evaluate AI's contribution** to a company's exit readiness and potential valuation uplift.
-
-By walking through this codelab, developers will gain insights into:
-1.  **Streamlit Application Development:** Building interactive dashboards with dynamic data.
-2.  **Data Generation & Management:** Creating synthetic datasets for complex scenarios and managing application state with `st.session_state`.
-3.  **Financial Modeling & AI Metrics:** Implementing custom formulas for AI readiness, investment efficiency, and valuation impact.
-4.  **Data Visualization:** Leveraging `plotly.express` and `plotly.graph_objects` for insightful and interactive charts.
-5.  **Strategic Decision Support:** Translating analytical metrics into actionable business recommendations.
-
-### Application Architecture and Data Flow
-
-The application follows a modular architecture, where core data processing logic is encapsulated in Python functions, and Streamlit handles the interactive UI. The data flow is sequential, building upon calculated metrics in previous steps.
-
-The overall flow of the application is as follows:
+By following this guide, developers will gain insights into how a full-stack data application can be built using Streamlit to address complex financial and strategic challenges, leveraging data science, interactive visualizations, and user-driven analysis.
 
 <aside class="positive">
-Understanding this high-level architecture is crucial for grasping how the various components of the Streamlit application work together to deliver comprehensive AI performance analytics. Each box represents a key stage in the data processing pipeline, progressively enriching the portfolio data with strategic insights.
+<b>The core value proposition</b> of this application is to transform qualitative assessments of AI into quantifiable metrics, enabling PE managers to make informed, data-backed decisions that drive portfolio value and mitigate risks.
 </aside>
+
+### Application Architecture Overview
+
+The application follows a standard Streamlit pattern, utilizing cached functions for efficient data processing and dynamic UI elements for user interaction.
 
 ```mermaid
 graph TD
-    A[Start: Generate Synthetic Portfolio Data] --> B{Data Initialization & Overview};
-    B --&gt; C[Calculate Org-AI-R Scores];
-    C --&gt; D[Benchmark AI Performance];
-    D --&gt; E[Calculate AI Investment Efficiency & EBITDA Impact];
-    E --&gt; F[Track Progress Over Time];
-    F --&gt; G[Identify Actionable Insights (CoE & Review)];
-    G --&gt; H[Evaluate Exit-Readiness & Valuation Impact];
-    H --&gt; I[End: Strategic Decision Support & Reporting];
-
-    subgraph Data Input
-        A
-    end
-
-    subgraph Core Calculations
-        C
-        D
-        E
-        H
-    end
-
-    subgraph Visualization & Insights
-        B
-        F
-        G
-        I
-    end
+    A[User Interaction: Sidebar Controls] --> B(Generate New Portfolio Data Button)
+    B --> C{load_portfolio_data}
+    C --> D(Synthetic Portfolio DataFrame)
+    D --> E{calculate_org_ai_r}
+    E --> F{calculate_benchmarks}
+    F --> G{calculate_aie_ebitda}
+    G --> H{calculate_exit_readiness_and_valuation}
+    H --> I(Processed Portfolio DataFrame in Session State)
+    I --> J{Page Navigation (Sidebar Radio Buttons)}
+    J --> K{Dynamic Page Rendering}
+    K --> L1[Page 1: Data Overview]
+    K --> L2[Page 2: Org-AI-R Calculation]
+    K --> L3[Page 3: Benchmarking]
+    K --> L4[Page 4: AI Investment & EBITDA Impact]
+    K --> L5[Page 5: Tracking Progress]
+    K --> L6[Page 6: Actionable Insights]
+    K --> L7[Page 7: Exit-Readiness & Valuation]
+    L1 & L2 & L3 & L4 & L5 & L6 & L7 --> M(Display DataFrames & Matplotlib/Seaborn Visualizations)
 ```
 
-**Detailed Breakdown:**
+The application leverages `st.cache_data` for performance optimization, ensuring that computationally intensive data generation and calculation functions are only rerun when their inputs change, leading to a smoother user experience.
 
-1.  **Data Generation:** Synthetic portfolio data for companies across various industries and quarters is generated, simulating key AI-related readiness scores and financial metrics.
-2.  **Org-AI-R Calculation:** Based on user-defined weights, each company's Organizational AI Readiness (Org-AI-R) score is computed, combining idiosyncratic strengths, systematic opportunities, and synergies.
-3.  **Benchmarking:** Org-AI-R scores are then benchmarked using percentile ranks (within portfolio) and industry-adjusted Z-scores (cross-portfolio).
-4.  **Financial Impact:** AI Investment Efficiency and Attributed EBITDA Impact are calculated, linking AI initiatives to tangible financial outcomes.
-5.  **Time-Series Analysis:** The historical trends of Org-AI-R and AI Investment Efficiency are visualized.
-6.  **Actionable Segmentation:** Companies are categorized into 'Centers of Excellence' or 'Companies for Review' based on configurable thresholds.
-7.  **Exit Strategy:** Exit-AI-R scores and Projected Exit Multiples are calculated, assessing how AI capabilities enhance a company's attractiveness and valuation during an exit.
+## 2. Setting Up the Portfolio & Initializing Data
+Duration: 0:10:00
 
-This interactive dashboard allows a Portfolio Manager to fine-tune assumptions, explore scenarios, and derive actionable insights for optimizing AI value creation within their fund.
+The first step in any analytical journey is data acquisition and preparation. This application uses a synthetic data generation approach to simulate a PE fund's portfolio. This allows for reproducible analysis and experimentation without needing real, sensitive financial data.
 
-## Setting Up Your Development Environment
-Duration: 0:05:00
+On the sidebar, you'll find "Global Portfolio Setup" controls:
+*   **Number of Portfolio Companies:** Adjust the total number of companies in the simulated portfolio.
+*   **Number of Quarters (History):** Define how many historical quarters of data will be generated for each company.
 
-Before you dive into the code, you need to set up your local development environment. This involves installing Python and the necessary libraries.
+These parameters directly influence the size and depth of the generated dataset.
 
-### Prerequisites
+### Data Generation Logic
 
-*   **Python 3.8+**: Ensure you have a recent version of Python installed. You can download it from [python.org](https://www.python.org/downloads/).
-*   **pip**: Python's package installer, usually comes with Python.
+The `load_portfolio_data` function is responsible for creating this synthetic dataset. It simulates various metrics crucial for AI performance assessment, including:
+*   **AI Readiness Components:** `IdiosyncraticReadiness`, `SystematicOpportunity`, `Synergy`.
+*   **Financials & AI Investment:** `AI_Investment`, `EBITDA_Impact`, `BaselineEBITDA`.
+*   **Exit Readiness Factors:** `Visible`, `Documented`, `Sustainable`.
+*   **Coefficients:** `GammaCoefficient`, `AI_PremiumCoefficient`, `BaselineMultiple`.
 
-### 1. Create a Virtual Environment (Recommended)
-
-It's a good practice to use a virtual environment to manage dependencies for your project.
-
-```console
-python -m venv venv
-```
-
-### 2. Activate the Virtual Environment
-
-*   **On Windows:**
-    ```console
-    .\venv\Scripts\activate
-    ```
-*   **On macOS/Linux:**
-    ```console
-    source venv/bin/activate
-    ```
-
-### 3. Install Required Libraries
-
-With your virtual environment activated, install all the necessary Python packages using pip.
-
-```console
-pip install streamlit pandas numpy plotly warnings
-```
-
-<aside class="positive">
-The `warnings` library is typically part of Python's standard library and doesn't usually require a separate `pip install`. However, including it in the `pip install` command is harmless and ensures all explicit dependencies are covered.
-</aside>
-
-### 4. Save the Application Code
-
-Create a file named `app.py` in your project directory and paste the entire Streamlit application code provided in the problem description into it.
-
-### 5. Run the Streamlit Application
-
-Navigate to your project directory in the terminal (with the virtual environment activated) and run the application:
-
-```console
-streamlit run app.py
-```
-
-This command will open a new tab in your web browser displaying the Streamlit application. You should see the dashboard with the initial portfolio data loaded.
-
-## Initializing Portfolio Data: The Bedrock for AI Performance Tracking
-Duration: 0:15:00
-
-The first step in any analytical journey is to ensure you have robust and relevant data. In this application, we begin by generating synthetic portfolio data that serves as the foundation for all subsequent AI performance assessments. This allows us to simulate a diverse portfolio of companies with various AI readiness indicators and financial metrics.
-
-### Understanding the Data Generation Process
-
-The `load_portfolio_data` function is responsible for creating this synthetic dataset. It simulates key characteristics of portfolio companies over several quarters.
+Each company's data is generated over the specified number of quarters, ensuring a time-series element for tracking progress. The `st.cache_data(ttl="2h")` decorator ensures that this function is only executed once for a given set of `num_companies` and `num_quarters` within a two-hour window, significantly speeding up subsequent interactions.
 
 ```python
-def load_portfolio_data(num_companies=10, num_quarters=5):
-    """
-    Generates synthetic portfolio data for the specified number of companies and quarters.
-    """
-    company_names = [f"Company {i+1}" for i in range(num_companies)]
-    industries = ['Tech', 'Healthcare', 'Finance', 'Retail', 'Manufacturing']
-    quarters = [f"Q{i+1}" for i in range(num_quarters)]
-
-    data = []
-    for company_id, company_name in enumerate(company_names):
-        industry = np.random.choice(industries)
-        baseline_ebitda = np.random.uniform(50, 500) * 1e6 # in millions
-        baseline_multiple = np.random.uniform(5, 15) # For exit valuation
-        ai_premium_coefficient = np.random.uniform(0.05, 0.25) # For exit valuation
-
-        for q_idx, quarter in enumerate(quarters):
-            # Simulate historical data with some trends
-            idiosyncratic_readiness = np.random.uniform(30, 90) + q_idx * np.random.uniform(0.5, 2.0)
-            systematic_opportunity = np.random.uniform(20, 80) + q_idx * np.random.uniform(0.2, 1.5)
-            synergy = np.random.uniform(0.01, 0.05) * (idiosyncratic_readiness * systematic_opportunity) / 100
-
-            ai_investment = np.random.uniform(0.1, 10) * 1e6 # in millions
-            ebitda_impact = np.random.uniform(0.5, 8.0) # percentage increase
-            gamma_coefficient = np.random.uniform(0.1, 0.5)
-
-            # Exit readiness components
-            visible_ai = np.random.uniform(22, 92) + q_idx * np.random.uniform(0.3, 1.8)
-            documented_ai = np.random.uniform(25, 95) + q_idx * np.random.uniform(0.4, 2.0)
-            sustainable_ai = np.random.uniform(20, 90) + q_idx * np.random.uniform(0.5, 2.2)
-
-            data.append({
-                'CompanyID': company_id,
-                'CompanyName': company_name,
-                'Industry': industry,
-                'Quarter': quarter,
-                'IdiosyncraticReadiness': np.clip(idiosyncratic_readiness + np.random.normal(0, 5), 0, 100),
-                'SystematicOpportunity': np.clip(systematic_opportunity + np.random.normal(0, 5), 0, 100),
-                'Synergy': np.clip(synergy + np.random.normal(0, 1), 0, 100),
-                'AI_Investment': np.clip(ai_investment + np.random.normal(0, 1e6), 0, 20e6),
-                'EBITDA_Impact': np.clip(ebitda_impact + np.random.normal(0, 0.5), 0.1, 15.0),
-                'BaselineEBITDA': baseline_ebitda,
-                'BaselineMultiple': baseline_multiple,
-                'AI_PremiumCoefficient': ai_premium_coefficient,
-                'GammaCoefficient': gamma_coefficient,
-                'Visible': np.clip(visible_ai + np.random.normal(0, 5), 0, 100),
-                'Documented': np.clip(documented_ai + np.random.normal(0, 5), 0, 100),
-                'Sustainable': np.clip(sustainable_ai + np.random.normal(0, 5), 0, 100)
-            })
-
+@st.cache_data(ttl="2h")
+def load_portfolio_data(num_companies_val, num_quarters_val):
+    # ... (function implementation) ...
     df = pd.DataFrame(data)
-    df['Quarter'] = pd.Categorical(df['Quarter'], categories=quarters, ordered=True)
-    # ... (initialization of other columns) ...
+    # ... (post-processing for categories and initial industry means) ...
     return df
 ```
 
-Key features of the generated data:
-*   **Company-specific metrics:** `IdiosyncraticReadiness`, `AI_Investment`, `BaselineEBITDA`, etc.
-*   **Industry-specific context:** `SystematicOpportunity`.
-*   **Time-series aspect:** Data generated for multiple `Quarter`s.
-*   **Exit-related metrics:** `Visible`, `Documented`, `Sustainable` AI capabilities, `BaselineMultiple`, `AI_PremiumCoefficient`.
+### Initial Data View
 
-### Interacting with the Application (Page 1)
-
-In the Streamlit application, navigate to the sidebar on the left.
-You'll see:
-*   **Number of Portfolio Companies:** Set the number of companies to simulate (e.g., 10).
-*   **Number of Quarters (History):** Define how many historical quarters the data should cover (e.g., 5).
+When you navigate to "1. Initializing Portfolio Data" in the main content area, you'll see a snapshot of the generated data.
 
 <aside class="positive">
-The `st.session_state` is crucial here. It stores the `portfolio_df` across different pages and reruns of the application, ensuring data persistence. When you click "Generate New Portfolio Data", `st.session_state.portfolio_df` is updated, and calculation flags (`org_ai_r_recalculated`, `exit_ai_r_recalculated`) are reset to trigger re-computation in subsequent steps.
+Use the "Generate New Portfolio Data" button in the sidebar to re-run the data generation with updated `Number of Portfolio Companies` or `Number of Quarters` settings. This will refresh all subsequent calculations based on the new dataset.
 </aside>
 
-After generating the data, the main panel for "1. Initializing Portfolio Data" displays:
-*   **Overview of Generated Portfolio Data:** The first few rows of the DataFrame (`st.dataframe(st.session_state.portfolio_df.head())`).
-*   **Descriptive Statistics:** A statistical summary of numerical columns (`st.dataframe(st.session_state.portfolio_df.describe())`).
-*   **Data Information:** Details on column names, data types, and non-null values (`st.session_state.portfolio_df.info(buf=buffer)`). This is rendered as `st.text`.
-
-This initial review helps ensure the data's integrity and readiness for analysis, mimicking a Portfolio Manager's essential data quality checks.
-
-## Calculating PE Org-AI-R Scores: The Foundation of AI Maturity Assessment
-Duration: 0:20:00
-
-With the foundational data in place, the next crucial step is to quantify the AI maturity of each portfolio company. This is achieved through the Organizational AI Readiness (Org-AI-R) score. This score provides a structured, measurable assessment of a company's ability to leverage AI for value creation, moving beyond subjective evaluations.
-
-### The Org-AI-R Score Formula
-
-The `calculate_org_ai_r` function implements the core logic for this metric.
+The application displays:
+*   **Overview of Generated Portfolio Data (First 5 Rows):** A `st.dataframe` showing the initial rows of the `portfolio_df`. This helps quickly inspect the data structure.
+*   **Descriptive Statistics:** A `st.dataframe` of `portfolio_df.describe()`, providing summary statistics (mean, std, min, max, etc.) for numerical columns.
+*   **Data Information:** Output from `portfolio_df.info()`, detailing column names, non-null counts, and data types, which is crucial for data quality checks.
 
 ```python
+# Displaying data overview
+st.subheader("Overview of Generated Portfolio Data (First 5 Rows):")
+st.dataframe(st.session_state.portfolio_df.head())
+
+# Displaying descriptive statistics
+st.subheader("Descriptive Statistics of Portfolio Data:")
+st.dataframe(st.session_state.portfolio_df.describe())
+
+# Displaying data info
+st.subheader("Data Information:")
+buffer = StringIO()
+st.session_state.portfolio_df.info(buf=buffer)
+st.text(buffer.getvalue())
+```
+
+This initial data exploration ensures that the foundation for our analysis is robust and understood.
+
+## 3. Demystifying the PE Org-AI-R Score
+Duration: 0:15:00
+
+The PE Org-AI-R (Organizational AI Readiness) Score is a cornerstone metric in this application, designed to quantify a portfolio company's overall AI maturity and preparedness to leverage AI for value creation. It's a weighted composite score, allowing PE managers to tailor the assessment based on their strategic focus.
+
+### The Org-AI-R Formula
+
+The core calculation for the PE Org-AI-R Score for target or portfolio company $j$ in industry $k$ at time $t$ is:
+
+$$ \text{PE Org-AI-R}_{j,t} = \alpha \cdot V^R_{org,j}(t) + (1 - \alpha) \cdot H^R_{org,k}(t) + \beta \cdot \text{Synergy}(V^R_{org,j}, H^R_{org,k}) $$
+
+Let's break down each component:
+*   $V^R_{org,j}(t)$: **Idiosyncratic Readiness**. This represents company-specific AI capabilities, such as internal data infrastructure, AI talent pool, leadership's commitment to AI, and existing AI initiatives. In our synthetic data, this is represented by `IdiosyncraticReadiness`.
+*   $H^R_{org,k}(t)$: **Systematic Opportunity**. This reflects the AI potential and adoption rates at an industry level, including disruption potential, competitive dynamics, and general market receptiveness to AI within that sector. In our synthetic data, this is proxied by `SystematicOpportunity` and later refined by `IndustryMeanOrgAIR`.
+*   $\alpha$: **Weight for Idiosyncratic Readiness**. This adjustable parameter (`alpha` slider) allows the Portfolio Manager to prioritize internal, company-specific AI strengths ($\alpha$ closer to 1) or external, industry-level AI opportunities ($\alpha$ closer to 0).
+*   $\beta$: **Synergy Coefficient**. This parameter (`beta` slider) quantifies the additional value created when a company's internal AI readiness (`IdiosyncraticReadiness`) aligns well with the external AI opportunities (`SystematicOpportunity`) in its industry. It measures how effectively the company can capitalize on industry trends given its internal strengths. In our synthetic data, this is represented by `Synergy`.
+
+The `Org_AI_R_Score` is then clipped to a 0-100 range for ease of interpretation.
+
+### `calculate_org_ai_r` Function
+
+This function takes the portfolio DataFrame and the user-defined `alpha` and `beta` weights to compute the Org-AI-R score for each company.
+
+```python
+@st.cache_data(ttl="2h")
 def calculate_org_ai_r(df, alpha=0.6, beta=0.15):
-    """
-    Calculates the Organizational AI Readiness (Org-AI-R) score for each company.
-    """
-    df_copy = df.copy()
+    if df.empty:
+        return df
+    df_copy = df.copy() 
     df_copy['Org_AI_R_Score'] = (
         alpha * df_copy['IdiosyncraticReadiness'] +
         (1 - alpha) * df_copy['SystematicOpportunity'] +
         beta * df_copy['Synergy']
     )
     df_copy['Org_AI_R_Score'] = np.clip(df_copy['Org_AI_R_Score'], 0, 100)
-    # ... (update industry means/stds) ...
     return df_copy
 ```
 
-The formula for the PE Org-AI-R Score for target or portfolio company $j$ in industry $k$ at time $t$ is:
+### Interactive Parameter Adjustment
 
-$$ \text{PE Org-AI-R}_{j,t} = \alpha \cdot V^R_{org,j}(t) + (1 - \alpha) \cdot H^R_{org,k}(t) + \beta \cdot \text{Synergy}(V^R_{org,j}, H^R_{org,k}) $$
+On the "2. Calculating Org-AI-R Scores" page, you'll find:
+*   **Weight for Idiosyncratic Readiness ($\alpha$) slider:** Adjust this to emphasize internal capabilities versus external opportunities.
+*   **Synergy Coefficient ($\beta$) slider:** Control the impact of the synergy between internal readiness and external opportunity.
 
-Where:
-*   $V^R_{org,j}(t)$: **Idiosyncratic Readiness**. This represents company-specific capabilities at time $t$, such as data infrastructure, AI talent pool, leadership commitment, and internal AI-driven processes. These are factors largely controllable by the company.
-*   $H^R_{org,k}(t)$: **Systematic Opportunity**. This captures the industry-level AI potential at time $t$, reflecting broader market adoption rates, disruption potential within the sector, and the competitive AI landscape. These are external factors influencing the company's AI context.
-*   $\alpha$: **Weight for Idiosyncratic Readiness**. This parameter allows you to adjust how much importance is placed on a company's internal, controllable AI capabilities ($V^R_{org,j}$) versus the external industry potential ($H^R_{org,k}$). A higher $\alpha$ means prioritizing internal strengths.
-*   $\beta$: **Synergy Coefficient**. This coefficient quantifies the additional value derived from the interplay and alignment between a company's idiosyncratic readiness and the systematic opportunity in its industry. It reflects how well a company can capitalize on market potential with its internal capabilities.
-
-### Interacting with the Application (Page 2)
-
-Navigate to "2. Calculating Org-AI-R Scores" in the sidebar.
-Here, you'll find interactive sliders:
-*   **Weight for Idiosyncratic Readiness ($\alpha$):** Adjust this slider (e.g., from 0.55 to 0.70).
-*   **Synergy Coefficient ($\beta$):** Adjust this slider (e.g., from 0.08 to 0.25).
+After adjusting the sliders, click the "Recalculate Org-AI-R Scores" button. This action not only recomputes the Org-AI-R scores but also triggers a cascade of recalculations for all dependent metrics (benchmarks, EBITDA impact, exit readiness) to ensure consistency across the dashboard.
 
 <aside class="negative">
-If Org-AI-R scores are not calculated, subsequent pages that depend on this metric (like benchmarking or EBITDA impact) will display warnings. Always ensure calculations are performed in the correct order.
+Changing these weights significantly alters how AI readiness is perceived across the portfolio. Always re-evaluate your chosen weights based on your fund's specific investment thesis and strategic priorities.
 </aside>
 
-Clicking the **"Recalculate Org-AI-R Scores"** button triggers the `calculate_org_ai_r` function with your chosen parameters. The application then displays:
-*   **Latest Quarter's PE Org-AI-R Scores:** A table showing the calculated scores for the most recent quarter, sorted to highlight leaders and laggards. This is crucial for a Portfolio Manager's initial assessment of AI maturity across the fund.
+The page then displays a `st.dataframe` showing the `CompanyName`, `Industry`, and the newly calculated `Org_AI_R_Score` for the latest quarter, sorted by score.
 
-This step allows the Portfolio Manager to calibrate the Org-AI-R score calculation to reflect their fund's specific strategic emphasis, whether on internal capabilities or broader market opportunities.
-
-## Benchmarking AI Performance: Identifying Relative AI Standing
+## 4. Benchmarking AI Performance
 Duration: 0:15:00
 
-An absolute Org-AI-R score is informative, but its true value emerges when benchmarked against peers. This step allows you to understand how a company's AI performance stacks up against other holdings in the portfolio and within its specific industry. This comparative analysis helps identify true AI leaders and areas for improvement.
+While an individual Org-AI-R score provides a snapshot of a company's AI maturity, its true significance often lies in how it compares to peers. Benchmarking is essential for identifying leaders, laggards, and strategic opportunities within the portfolio and against broader industry standards.
 
-### Benchmarking Metrics
+This section utilizes two key benchmarking metrics:
+1.  **Org-AI-R Percentile (Within-Portfolio Benchmarking):** Ranks a company's AI readiness relative to all other companies within the fund's portfolio for a given quarter.
+2.  **Org-AI-R Z-Score (Cross-Portfolio/Industry-Adjusted Benchmarking):** Measures how many standard deviations a company's Org-AI-R score is from its industry's average, normalizing for industry-specific AI potentials.
 
-The `calculate_benchmarks` function computes two key metrics:
+### Benchmarking Formulas
+
+**Org-AI-R Percentile:**
+This is calculated by ranking each company's Org-AI-R score within the entire portfolio for a given quarter and expressing it as a percentile.
+$$ \text{Percentile}_j = \left( \frac{\text{Rank}(\text{Org-AI-R}_j)}{\text{Portfolio Size}} \right) \times 100 $$
+where $\text{Rank}(\text{Org-AI-R}_j)$ is the rank of company $j$'s Org-AI-R score within the portfolio (from lowest to highest), and $\text{Portfolio Size}$ is the total number of companies in the portfolio for that quarter.
+
+**Org-AI-R Z-Score:**
+This score normalizes the Org-AI-R score relative to its industry.
+$$ Z_{j,k} = \frac{\text{Org-AI-R}_j - \mu_k}{\sigma_k} $$
+where $\text{Org-AI-R}_j$ is the Org-AI-R score of company $j$, $\mu_k$ is the mean Org-AI-R score for industry $k$, and $\sigma_k$ is the standard deviation of Org-AI-R scores for industry $k$. A positive Z-score indicates above-average performance within its industry, while a negative score suggests underperformance.
+
+### `calculate_benchmarks` Function
+
+This function takes the DataFrame (with `Org_AI_R_Score` already calculated) and adds the percentile and Z-score metrics.
 
 ```python
+@st.cache_data(ttl="2h")
 def calculate_benchmarks(df):
-    """
-    Calculates percentile rank and Z-score for Org-AI-R scores.
-    """
+    if df.empty or 'Org_AI_R_Score' not in df.columns:
+        return df.assign(Org_AI_R_Percentile=0.0, Org_AI_R_Z_Score=0.0) 
+    
     df_copy = df.copy()
-    df_copy['Org_AI_R_Percentile'] = df_copy.groupby('Quarter')['Org_AI_R_Score'].rank(pct=True) * 100
-    df_copy['Org_AI_R_Z_Score'] = df_copy.apply(
-        lambda row: (row['Org_AI_R_Score'] - row['IndustryMeanOrgAIR']) / row['IndustryStdDevOrgAIR']
-        if row['IndustryStdDevOrgAIR'] != 0 else 0, axis=1
-    )
+    df_copy['Org_AI_R_Percentile'] = df_copy.groupby('Quarter', observed=False)['Org_AI_R_Score'].rank(pct=True) * 100
+    df_copy['IndustryMeanOrgAIR'] = df_copy.groupby(['Industry', 'Quarter'], observed=False)['Org_AI_R_Score'].transform('mean')
+    
+    def safe_zscore_transform(series):
+        if len(series) > 1 and series.std() > 0:
+            return zscore(series)
+        return pd.Series(0.0, index=series.index)
+    
+    df_copy['Org_AI_R_Z_Score'] = df_copy.groupby(['Industry', 'Quarter'], observed=False)['Org_AI_R_Score'].transform(safe_zscore_transform)
     return df_copy
 ```
 
-1.  **Within-Portfolio Benchmarking (Percentile Rank):**
-    $$ \text{Percentile}_j = \left( \frac{\text{Rank}(\text{Org-AI-R}_j)}{\text{Portfolio Size}} \right) \times 100 $$
-    This metric indicates a company's standing relative to all other fund holdings. For example, a 90th percentile means it outperforms 90% of its peers within the portfolio. This helps identify internal champions.
+### Benchmarking Visualization
 
-2.  **Cross-Portfolio Benchmarking (Industry-Adjusted Z-Score):**
-    $$ Z_{j,k} = \frac{\text{Org-AI-R}_j - \mu_k}{\sigma_k} $$
-    This score shows how much a company's Org-AI-R deviates from its industry's mean ($\mu_k$), in terms of standard deviations ($\sigma_k$). Positive values suggest outperformance relative to industry peers, while negative values signal underperformance. This provides context-specific performance.
+On the "3. Benchmarking AI Performance" page:
+*   **Select Quarter for Benchmarking:** A `st.selectbox` allows you to choose a specific quarter to view the benchmarking results.
+*   **Org-AI-R Benchmarks Table:** A `st.dataframe` displays `CompanyName`, `Industry`, `Org_AI_R_Score`, `Org_AI_R_Percentile`, and `Org_AI_R_Z_Score`, sorted by Org-AI-R Score.
 
-### Interacting with the Application (Page 3)
+Two interactive visualizations provide deeper insights:
+1.  **Org-AI-R Scores by Company (Bar Chart):** A `seaborn.barplot` shows each company's Org-AI-R score, colored by industry, with a horizontal line indicating the portfolio average. This helps in quick visual comparison of absolute scores.
+2.  **Org-AI-R Score vs. Industry-Adjusted Z-Score (Scatter Plot):** A `seaborn.scatterplot` plots `Org_AI_R_Score` on the x-axis and `Org_AI_R_Z_Score` on the y-axis, with points sized by `Org_AI_R_Percentile` and colored by `Industry`. This powerful visualization identifies:
+    *   **High-Performing Companies:** Upper-right quadrant (high Org-AI-R, positive Z-score).
+    *   **Industry Laggards:** Lower-left quadrant (low Org-AI-R, negative Z-score).
+    *   **Hidden Gems/Challenges:** Companies with high absolute Org-AI-R but negative Z-score (meaning they are strong but perhaps underperforming relative to their *very* strong industry), or vice-versa.
 
-Navigate to "3. Benchmarking AI Performance" in the sidebar.
-You will:
-*   **Select Quarter for Benchmarking:** Choose a specific quarter (e.g., the latest one) using a `st.selectbox` to focus the analysis.
+These benchmarks are invaluable for identifying best practices within leading companies and pinpointing those that require targeted support to catch up to their industry peers.
 
-The page then displays:
-*   **Org-AI-R Benchmarks Table:** A table showing `CompanyName`, `Industry`, `Org_AI_R_Score`, `Org_AI_R_Percentile`, and `Org_AI_R_Z_Score` for the selected quarter.
-*   **Bar Chart: Org-AI-R Scores by Company:** Visualizes individual company Org-AI-R scores, with an overlaid red dashed line representing the portfolio average. This uses `plotly.express.bar`.
+## 5. Quantifying AI Investment & EBITDA Impact
+Duration: 0:15:00
 
-    ```python
-    # Example plot code snippet
-    fig1 = px.bar(...)
-    fig1.add_hline(y=portfolio_average_org_ai_r, line_dash="dash", line_color="red", annotation_text=f"Portfolio Average: {portfolio_average_org_ai_r:.2f}")
-    st.plotly_chart(fig1, use_container_width=True)
-    ```
+Beyond readiness scores, a Private Equity Portfolio Manager needs to understand the tangible financial outcomes of AI initiatives. This section focuses on quantifying the efficiency of AI investments and attributing specific EBITDA impact to improvements in AI readiness. This allows for direct evaluation of capital allocation and identification of where AI investments are truly generating value.
 
-*   **Scatter Plot: Org-AI-R Score vs. Industry-Adjusted Z-Score:** This plot uses `plotly.express.scatter` to visualize relative performance.
-    *   `x-axis`: `Org_AI_R_Score`
-    *   `y-axis`: `Org_AI_R_Z_Score`
-    *   `color`: `Industry`
-    *   `size`: `Org_AI_R_Percentile` (larger points indicate higher within-portfolio ranking).
-    *   It includes vertical and horizontal lines representing the portfolio mean Org-AI-R and industry mean Z-score, respectively.
+### Key Financial Impact Metrics
 
-    ```python
-    # Example plot code snippet
-    fig2 = px.scatter(...)
-    fig2.add_vline(x=portfolio_mean_org_ai_r, line_dash="dash", line_color="orange", annotation_text=f"Portfolio Mean Org-AI-R: {portfolio_mean_org_ai_r:.2f}")
-    fig2.add_hline(y=0, line_dash="dash", line_color="gray", annotation_text="Industry Mean Z-Score (0)")
-    st.plotly_chart(fig2, use_container_width=True)
-    ```
+**AI Investment Efficiency ($\text{AIE}_j$):**
+This metric measures how effectively AI investments translate into improvements in AI readiness and overall EBITDA impact. A higher AIE signifies a more efficient deployment of capital for AI initiatives.
 
-This visual and numerical benchmarking allows a Portfolio Manager to quickly identify which companies are truly excelling in AI within their context and which might need focused attention.
+$$ \text{AIE}_j = \left( \frac{\Delta\text{Org-AI-R}_j}{\text{AI Investment}_j} \right) \times \text{EBITDA Impact}_j \times C $$
+where:
+*   $\Delta\text{Org-AI-R}_j$: The change in Org-AI-R score for company $j$ from the previous quarter.
+*   $\text{AI Investment}_j$: The total AI investment for company $j$ in the current quarter.
+*   $\text{EBITDA Impact}_j$: The direct percentage EBITDA impact reported for company $j$.
+*   $C$: A scaling constant (e.g., $1,000,000$ in the code) to make the efficiency metric more readable, representing impact points per million invested.
 
-## AI Investment Efficiency and EBITDA Impact: Quantifying Financial Returns
-Duration: 0:20:00
+**Attributed EBITDA Impact Percentage ($\Delta\text{EBITDA}\%$):**
+This formula estimates the percentage increase in EBITDA directly attributable to the change in a company's Org-AI-R score, factoring in the systematic opportunity of its industry.
 
-Quantifying the financial impact of AI investments is paramount for a Portfolio Manager. This step assesses how efficiently companies convert their AI expenditures into real business value, specifically in terms of EBITDA growth. This provides critical insights into capital deployment strategies and highlights which companies are generating the most value from their AI spend.
+$$ \Delta\text{EBITDA}\% = \gamma \cdot \Delta\text{Org-AI-R}_j \cdot (H^R_{org,k} / 100) $$
+where:
+*   $\gamma$: The `GammaCoefficient`, a scaling factor.
+*   $\Delta\text{Org-AI-R}_j$: The change in Org-AI-R score for company $j$.
+*   $H^R_{org,k}$: The systematic opportunity for industry $k$, proxied by `IndustryMeanOrgAIR` (the mean Org-AI-R score for the industry). The division by 100 normalizes it as a percentage from 100.
 
-### Core Financial Impact Metrics
+The `Attributed_EBITDA_Impact_Absolute` is then calculated by applying this percentage to the `BaselineEBITDA`.
 
-The `calculate_aie_ebitda` function computes these crucial metrics.
+### `calculate_aie_ebitda` Function
+
+This function sorts the DataFrame by `CompanyID` and `Quarter` to correctly calculate the quarter-over-quarter change in `Org_AI_R_Score`. It then computes `AI_Investment_Efficiency` and the two `Attributed_EBITDA_Impact` metrics.
 
 ```python
+@st.cache_data(ttl="2h")
 def calculate_aie_ebitda(df):
-    """
-    Calculates AI Investment Efficiency and Attributed EBITDA Impact.
-    """
-    df_sorted = df.sort_values(by=['CompanyID', 'Quarter'])
-    df_sorted['Delta_Org_AI_R'] = df_sorted.groupby('CompanyID')['Org_AI_R_Score'].diff().fillna(0)
-
-    # AI Investment Efficiency (AIE_j)
-    df_sorted['AI_Investment_Efficiency'] = df_sorted.apply(
-        lambda row: (row['Delta_Org_AI_R'] * row['EBITDA_Impact']) / (row['AI_Investment'] / 1e6)
-        if row['AI_Investment'] > 0 and row['Delta_Org_AI_R'] > 0 and row['EBITDA_Impact'] > 0 else 0, axis=1
-    )
-    df_sorted.loc[df_sorted['Delta_Org_AI_R'] <= 0, 'AI_Investment_Efficiency'] = 0
-
-    # Attributed EBITDA Impact (%)
-    df_sorted['Attributed_EBITDA_Impact_Pct'] = df_sorted.apply(
-        lambda row: row['GammaCoefficient'] * row['Delta_Org_AI_R'] * row['SystematicOpportunity'] / 100
-        if row['Delta_Org_AI_R'] > 0 else 0, axis=1
-    )
-    df_sorted['Attributed_EBITDA_Impact_Absolute'] = (df_sorted['Attributed_EBITDA_Impact_Pct'] / 100) * df_sorted['BaselineEBITDA']
+    if df.empty or 'Org_AI_R_Score' not in df.columns:
+        return df.assign(Delta_Org_AI_R=0.0, AI_Investment_Efficiency=0.0, 
+                         Attributed_EBITDA_Impact_Pct=0.0, Attributed_EBITDA_Impact_Absolute=0.0)
+    
+    df_copy = df.copy()
+    df_sorted = df_copy.sort_values(by=['CompanyID', 'Quarter'])
+    df_sorted['Delta_Org_AI_R'] = df_sorted.groupby('CompanyID', observed=False)['Org_AI_R_Score'].diff().fillna(0)
+    
+    # ... (AIE and Attributed EBITDA calculations) ...
+    
     return df_sorted
 ```
 
-1.  **AI Investment Efficiency ($\text{AIE}_j$):**
-    $$ \text{AIE}_j = \frac{\Delta\text{Org-AI-R}_j \cdot \text{EBITDA Impact}_j}{\text{AI Investment}_j \text{ (in millions)}} $$
-    This metric measures the combined impact (Org-AI-R points and baseline EBITDA Impact percentage) generated per million dollars of AI investment. A higher AIE indicates more efficient capital deployment for AI initiatives. `$\Delta\text{Org-AI-R}_j$` represents the change in Org-AI-R score from the previous quarter, and `EBITDA Impact_j` is the baseline percentage increase in EBITDA.
+### Financial Impact Visualization
 
-2.  **Attributed EBITDA Impact ($\Delta\text{EBITDA}\%$):**
-    $$ \Delta\text{EBITDA}\% = \text{GammaCoefficient} \cdot \Delta\text{Org-AI-R} \cdot H^R_{org,k}/100 $$
-    This is the estimated percentage increase in EBITDA directly attributed to the change in a company's Org-AI-R score, factoring in its industry's systematic opportunity ($H^R_{org,k}$) and a `GammaCoefficient`. The `GammaCoefficient` acts as a scaling factor, reflecting the sensitivity of EBITDA to AI readiness changes.
+On the "4. AI Investment & EBITDA Impact" page:
+*   **Latest Quarter's AI Investment Efficiency and Attributed EBITDA Impact Table:** A `st.dataframe` shows these key financial metrics for the most recent quarter, sorted by `AI_Investment_Efficiency`. This helps identify which companies are getting the most "bang for their buck" from AI investments.
+*   **AI Investment vs. Efficiency (Scatter Plot):** A `seaborn.scatterplot` visualizes `AI_Investment` (log-scaled on the x-axis for better distribution) against `AI_Investment_Efficiency` on the y-axis. The size of the points represents `Attributed_EBITDA_Impact_Pct`, and colors denote `Industry`. This plot helps to:
+    *   Identify companies that achieve high efficiency with relatively low investment.
+    *   Spot heavy investors who might be getting low efficiency.
+    *   Understand the relationship between investment size, efficiency, and actual EBITDA impact.
 
-### Interacting with the Application (Page 4)
+This analysis provides critical insights into which companies are most effectively translating their AI maturity into financial returns, guiding future investment decisions and resource allocation strategies within the PE fund.
 
-Navigate to "4. AI Investment & EBITDA Impact" in the sidebar.
-The page automatically calculates and displays these metrics for the latest quarter:
-*   **AI Investment Efficiency and Attributed EBITDA Impact Table:** A table listing `CompanyName`, `AI_Investment`, `Delta_Org_AI_R`, `AI_Investment_Efficiency`, `Attributed_EBITDA_Impact_Pct`, and `Attributed_EBITDA_Impact_Absolute`.
-*   **Scatter Plot: AI Investment vs. Efficiency (Highlighting EBITDA Impact):** This plot helps visualize the trade-offs.
-    *   `x-axis`: `AI_Investment_M` (AI Investment in Millions, using `log_x=True` for better visualization of wide ranges).
-    *   `y-axis`: `AI_Investment_Efficiency`.
-    *   `color`: `Industry`.
-    *   `size`: `Attributed_EBITDA_Impact_Pct` (larger points indicate greater attributed EBITDA impact).
+## 6. Tracking Progress and Trends Over Time
+Duration: 0:10:00
 
-    ```python
-    # Example plot code snippet
-    fig = px.scatter(
-        latest_quarter_df,
-        x='AI_Investment_M',
-        y='AI_Investment_Efficiency',
-        color='Industry',
-        size='Attributed_EBITDA_Impact_Pct',
-        log_x=True
-        # ... other parameters ...
-    )
-    st.plotly_chart(fig, use_container_width=True)
-    ```
+Understanding current performance is vital, but in private equity, assessing trajectory and long-term trends is equally, if not more, critical. This section empowers Portfolio Managers to monitor how individual companies are progressing in their AI journey and how efficiently they're utilizing AI investments over multiple quarters.
 
-This visualization allows a Portfolio Manager to identify companies that are highly efficient with lower investments, those generating significant financial uplift, or those achieving both, informing capital allocation decisions.
+### Dynamic Company Selection
 
-## Tracking Progress Over Time: Visualizing Trajectories
-Duration: 0:15:00
+On the "5. Tracking Progress Over Time" page:
+*   **Select Companies to Track:** A `st.multiselect` widget allows you to choose up to five (for clarity in visualization) specific portfolio companies. This enables focused analysis on a subset of companies of particular interest.
 
-Current metrics offer a snapshot, but understanding the historical trajectory of a portfolio company's AI performance is crucial for assessing the effectiveness of long-term strategies and identifying sustainable trends. This step provides time-series visualizations of key AI performance indicators.
+Once companies are selected, the application filters the historical data for these companies and displays two line charts.
 
-### Monitoring Trends
+### Trend Visualizations
 
-This section re-uses the already calculated metrics (`Org_AI_R_Score` and `AI_Investment_Efficiency`) and presents them in a time-series context. There isn't a new calculation function for this specific page; instead, it aggregates and plots existing data.
-
-<aside class="positive">
-Tracking progress over time is essential for strategic planning. It helps a Portfolio Manager understand if interventions are working, if companies are maintaining their competitive edge, or if new challenges are emerging.
-</aside>
-
-### Interacting with the Application (Page 5)
-
-Navigate to "5. Tracking Progress Over Time" in the sidebar.
-You will:
-*   **Select Companies to Track:** Use a `st.multiselect` widget to choose up to 5 companies for clearer visualization of their trends.
-
-The page then displays two line charts:
-
-1.  **Org-AI-R Score Trajectory Over Time:**
-    *   This `plotly.express.line` chart shows the `Org_AI_R_Score` for selected companies across quarters.
-    *   It overlays a line representing the **"Portfolio Average"** Org-AI-R score for context.
-    *   Markers are used for individual data points to highlight specific quarter values.
-
-    ```python
-    # Example plot code snippet
-    plot_df_org_ai_r = pd.concat([df_filtered_companies[['Quarter', 'Org_AI_R_Score', 'CompanyName']], portfolio_avg_org_ai_r])
-    fig1 = px.line(
-        plot_df_org_ai_r,
-        x='Quarter',
-        y='Org_AI_R_Score',
-        color='CompanyName',
-        markers=True,
-        title='Org-AI-R Score Trajectory Over Time'
-        # ... other parameters ...
-    )
-    st.plotly_chart(fig1, use_container_width=True)
-    ```
-
-2.  **AI Investment Efficiency Trajectory Over Time:**
-    *   Similarly, this `plotly.express.line` chart visualizes the `AI_Investment_Efficiency` for selected companies.
-    *   It also includes an overlaid **"Portfolio Average"** line for comparative analysis.
-
-    ```python
-    # Example plot code snippet
-    plot_df_aie = pd.concat([df_filtered_companies[['Quarter', 'AI_Investment_Efficiency', 'CompanyName']], portfolio_avg_aie])
-    fig2 = px.line(
-        plot_df_aie,
-        x='Quarter',
-        y='AI_Investment_Efficiency',
-        color='CompanyName',
-        markers=True,
-        title='AI Investment Efficiency Trajectory Over Time'
-        # ... other parameters ...
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-    ```
-
-These visualizations help a Portfolio Manager spot consistent improvers, decliners, or companies that deviate significantly from the average, informing decisions on which companies warrant deeper investigation or targeted support.
-
-## Actionable Insights: Centers of Excellence & Companies for Review
-Duration: 0:20:00
-
-A critical responsibility of a Portfolio Manager is to translate analytical insights into actionable strategies. This step allows for the strategic segmentation of the portfolio, identifying high-performing 'Centers of Excellence' to scale best practices, and 'Companies for Review' that require immediate strategic intervention.
-
-### Identifying Action Categories
-
-The `identify_actionable_insights` function applies user-defined thresholds to categorize companies.
+1.  **Org-AI-R Score Trajectory Over Time (Line Chart):** A `seaborn.lineplot` displays the `Org_AI_R_Score` for each selected company across all available quarters.
+    *   Individual company lines are clearly differentiated by color.
+    *   A dashed black line represents the `Portfolio Average` Org-AI-R score for each quarter, providing a benchmark against the overall fund's performance. This helps identify if a company is outperforming or lagging the portfolio trend.
+2.  **AI Investment Efficiency Trajectory Over Time (Line Chart):** Similarly, a `seaborn.lineplot` tracks the `AI_Investment_Efficiency` for selected companies over time.
+    *   This chart is crucial for understanding whether AI investments are becoming more or less efficient over time. Are companies improving their ROI on AI initiatives, or are they stagnating?
+    *   Again, the `Portfolio Average` AIE is overlaid to provide contextual comparison.
 
 ```python
-def identify_actionable_insights(df, org_ai_r_threshold_coe=75, ebitda_impact_threshold_coe=3,
-                                 org_ai_r_threshold_review=50, ebitda_impact_threshold_review=1.0):
-    """
-    Identifies Centers of Excellence and Companies for Review based on thresholds.
-    """
-    latest_data = df.loc[df.groupby('CompanyID')['Quarter'].idxmax()].copy()
+# Example for Org-AI-R Trajectory plot
+sns.lineplot(x='Quarter', y='Org_AI_R_Score', hue='CompanyName', marker='o', data=tracking_df, ax=ax4, palette='deep')
+portfolio_avg_df = st.session_state.portfolio_df.groupby('Quarter', observed=False)['Org_AI_R_Score'].mean().reset_index()
+sns.lineplot(x='Quarter', y='Org_AI_R_Score', data=portfolio_avg_df, ax=ax4, color='black', linestyle='--', label='Portfolio Average', marker='x')
+```
 
-    # Centers of Excellence
+These visualizations enable quick identification of:
+*   **Positive Trends:** Companies with consistently rising Org-AI-R scores or AIE.
+*   **Stagnation or Decline:** Companies where AI progress has stalled or efficiency is decreasing.
+*   **Outliers:** Companies performing significantly above or below the portfolio average, prompting further investigation.
+
+Tracking these trajectories is essential for proactive management, allowing PE managers to intervene early, reallocate resources, or double down on successful strategies.
+
+## 7. Actionable Insights: Centers of Excellence and Companies for Review
+Duration: 0:15:00
+
+A critical function of a PE Portfolio Manager is to derive actionable insights from data. This section is designed to automatically identify "Centers of Excellence" (CoE) and "Companies for Review" based on user-defined performance thresholds, streamlining strategic decision-making. This targeted identification is crucial for optimizing the fund's overall AI strategy, fostering best practices, and mitigating risks.
+
+### Defining Actionable Thresholds
+
+On the "6. Actionable Insights: CoE & Review" page, you can dynamically set the criteria using `st.slider` widgets:
+*   **Org-AI-R Score Threshold for Center of Excellence:** Companies with an Org-AI-R score *above* this value are considered for CoE status.
+*   **EBITDA Impact (%) Threshold for Center of Excellence:** Companies with an EBITDA Impact *above* this value are considered for CoE status.
+*   **Org-AI-R Score Threshold for Companies for Review:** Companies with an Org-AI-R score *below or equal to* this value are flagged for review.
+*   **EBITDA Impact (%) Threshold for Companies for Review:** Companies with an EBITDA Impact *below or equal to* this value are flagged for review.
+
+Clicking the "Re-evaluate Actionable Insights" button (or on initial load) triggers the `identify_actionable_insights` function with these thresholds.
+
+### `identify_actionable_insights` Function
+
+This function filters the *latest quarter's* data to identify companies that meet the specified criteria.
+
+```python
+@st.cache_data(ttl="2h")
+def identify_actionable_insights(df, org_ai_r_threshold_coe, ebitda_impact_threshold_coe,
+                                 org_ai_r_threshold_review, ebitda_impact_threshold_review):
+    if df.empty or 'Org_AI_R_Score' not in df.columns or 'EBITDA_Impact' not in df.columns:
+        return pd.DataFrame(), pd.DataFrame() 
+    
+    latest_data = df.loc[df.groupby('CompanyID', observed=False)['Quarter'].idxmax()]
+    
     centers_of_excellence = latest_data[
         (latest_data['Org_AI_R_Score'] > org_ai_r_threshold_coe) &
-        (latest_data['Attributed_EBITDA_Impact_Pct'] > ebitda_impact_threshold_coe)
+        (latest_data['EBITDA_Impact'] > ebitda_impact_threshold_coe)
     ].sort_values(by='Org_AI_R_Score', ascending=False)
-
-    # Companies for Review
+    
     companies_for_review = latest_data[
         (latest_data['Org_AI_R_Score'] <= org_ai_r_threshold_review) |
-        (latest_data['Attributed_EBITDA_Impact_Pct'] <= ebitda_impact_threshold_review)
+        (latest_data['EBITDA_Impact'] <= ebitda_impact_threshold_review)
     ].sort_values(by='Org_AI_R_Score', ascending=True)
-
+    
     return centers_of_excellence, companies_for_review
 ```
 
-*   **Centers of Excellence (CoE):** Companies demonstrating both high `Org-AI-R Scores` (above `coe_org_ai_r_threshold_coe`) and significant `Attributed_EBITDA_Impact_Pct` (above `coe_ebitda_threshold_coe`). These companies are benchmarks for best practices.
-*   **Companies for Review:** Companies with lower `Org-AI_R_Scores` (below or equal to `review_org_ai_r_threshold_review`) OR minimal `Attributed_EBITDA_Impact_Pct` (below or equal to `review_ebitda_threshold_review`). These indicate areas requiring strategic intervention.
+<aside class="positive">
+Adjusting these thresholds allows you to tune the sensitivity of your identification process, adapting to different market conditions or fund strategies.
+</aside>
 
-### Interacting with the Application (Page 6)
+### Displaying Insights
 
-Navigate to "6. Actionable Insights: CoE & Review" in the sidebar.
-You will find several `st.slider` widgets to define your strategic thresholds:
-*   **Org-AI-R Score Threshold for Center of Excellence:** (e.g., default 75)
-*   **Attributed EBITDA Impact (%) Threshold for Center of Excellence:** (e.g., default 3.0%)
-*   **Org-AI-R Score Threshold for Companies for Review:** (e.g., default 50)
-*   **Attributed EBITDA Impact (%) Threshold for Companies for Review:** (e.g., default 1.0%)
+The page displays two `st.dataframe` tables:
+*   **Centers of Excellence:** Lists companies that meet the CoE criteria, highlighting their `Org_AI_R_Score`, `EBITDA_Impact`, and `AI_Investment_Efficiency`. These companies are potential sources of best practices and scalable AI solutions.
+*   **Companies for Review:** Lists companies that fall below the review thresholds, indicating potential underperformance in AI readiness or financial impact. These companies require immediate strategic attention, potentially including resource reallocation, a re-evaluation of their AI strategy, or focused support.
 
-Clicking **"Re-evaluate Actionable Insights"** will re-segment the companies based on the new thresholds.
+### Portfolio AI Performance Map (Scatter Plot)
 
-The page then displays:
-*   **Centers of Excellence Table:** Lists companies meeting the CoE criteria.
-*   **Companies for Review Table:** Lists companies meeting the review criteria.
-*   **Scatter Plot: Portfolio AI Performance Segmentation:** This interactive `plotly.express.scatter` plot visually segments the portfolio.
-    *   `x-axis`: `Org_AI_R_Score`
-    *   `y-axis`: `Attributed_EBITDA_Impact_Pct`
-    *   `color`: `Category` (CoE, Company for Review, Normal).
-    *   `size`: `AI_Investment_Efficiency`.
-    *   Dynamically adjusting vertical and horizontal lines represent the defined thresholds for both CoE and Review categories.
-    *   Specific markers and text labels (`go.Scatter` with `mode='text'`) are added for CoE and Review companies, making them immediately identifiable.
+A highly informative `seaborn.scatterplot` visualizes **Org-AI-R Score vs. EBITDA Impact** for the latest quarter.
+*   Each company is plotted based on its Org-AI-R Score (x-axis) and EBITDA Impact (y-axis), with hue by `Industry` and size by `AI_Investment_Efficiency`.
+*   **Threshold Lines:** Vertical and horizontal lines clearly mark the `Org-AI-R` and `EBITDA Impact` thresholds for both CoE (green, dotted) and Companies for Review (red, dashed).
+*   **Highlighted Companies:** Companies identified as CoE are marked with a large green star ($\star$) and their names, while Companies for Review are marked with a large red 'X' and their names.
 
-    ```python
-    # Example plot code snippet for segmentation
-    fig = px.scatter(
-        latest_quarter_df,
-        x='Org_AI_R_Score',
-        y='Attributed_EBITDA_Impact_Pct',
-        color='Category',
-        size='AI_Investment_Efficiency',
-        # ... other parameters ...
-    )
-    # Add dynamic threshold lines
-    fig.add_vline(x=coe_org_ai_r_threshold_val, line_dash="dash", line_color="green", annotation_text=f"CoE Org-AI-R > {coe_org_ai_r_threshold_val}")
-    fig.add_hline(y=coe_ebitda_threshold_val, line_dash="dash", line_color="green", annotation_text=f"CoE EBITDA > {coe_ebitda_threshold_val}%")
-    # ... add lines for review thresholds ...
+This visual map immediately conveys the strategic positioning of all portfolio companies, making it easy to spot:
+*   **"Stars":** Companies in the top-right quadrant (high Org-AI-R, high EBITDA Impact).
+*   **"Problem Children":** Companies in the bottom-left quadrant (low Org-AI-R, low EBITDA Impact).
+*   **"Growth Opportunities":** Companies with high Org-AI-R but perhaps moderate EBITDA impact (potential to convert AI readiness into more financial gains).
+*   **"Efficiency Challenges":** Companies with decent EBITDA impact but lower Org-AI-R, suggesting their impact might not be sustainable without improving underlying readiness.
 
-    # Add text labels for identified companies
-    for _, row in centers_of_excellence.iterrows():
-        fig.add_trace(go.Scatter(mode='markers+text', text=[row['CompanyName']], ...))
-    # ... similar for companies_for_review ...
+This integrated approach provides a powerful tool for strategic portfolio management.
 
-    st.plotly_chart(fig, use_container_width=True)
-    ```
+## 8. Enhancing Exit-Readiness & Maximizing Valuation
+Duration: 0:15:00
 
-This segmentation provides immediate strategic clarity, enabling a Portfolio Manager to allocate resources, provide targeted support, or scale best practices across the fund.
+For Private Equity, the ultimate goal is a successful exit. The AI capabilities of a portfolio company can profoundly influence its attractiveness to potential acquirers and, consequently, its exit valuation. This section allows PE managers to assess how "buyer-friendly" a company's AI assets are and to quantify the potential premium these assets could add to its exit multiple.
 
-## Evaluating Exit-Readiness and Potential Valuation Impact
-Duration: 0:20:00
+### Exit-AI-R Score
 
-For a Private Equity fund, preparing for a successful exit is a paramount concern. AI capabilities can significantly enhance a company's attractiveness to potential acquirers and consequently impact its valuation multiple. This final analytical step assesses a company's 'buyer-friendly' AI assets and their contribution to its projected exit multiple.
+The Exit-Readiness Score (`Exit-AI-R`) quantifies how well a company's AI capabilities are positioned to drive a favorable exit. The formula for the Exit-Readiness Score for portfolio company $j$ preparing for exit is:
 
-### Exit-AI-R Score and Valuation Model
+$$ \text{Exit-AI-R}_j = w_1 \cdot \text{Visible}_j + w_2 \cdot \text{Documented}_j + w_3 \cdot \text{Sustainable}_j $$
+where:
+*   $\text{Visible}_j$: **Visible AI Capabilities**. This refers to AI features that are easily discernible and appealing to potential buyers, such as product functionality driven by AI, a well-defined technology stack, clear customer value propositions derived from AI, and a strong brand narrative around AI innovation.
+*   $\text{Documented}_j$: **Documented AI Impact**. This measures the extent to which a company has quantified and auditable evidence of AI's financial or operational benefits, including ROI analyses, efficiency gains, and revenue uplift attributable to AI. This provides concrete evidence for due diligence.
+*   $\text{Sustainable}_j$: **Sustainable AI Capabilities**. This assesses whether AI capabilities are deeply embedded and can deliver long-term value, rather than being one-off projects. It includes aspects like a robust AI strategy, scalable infrastructure, continuous innovation pipelines, and a culture of AI adoption.
+*   $w_1, w_2, w_3$: **Weighting factors**. These adjustable weights allow the Portfolio Manager to emphasize different aspects that potential buyers might prioritize in their valuation model or during a due diligence process.
 
-The `calculate_exit_readiness_and_valuation` function is responsible for these calculations.
+### Multiple Attribution Model
+
+This model translates the `Exit-AI-R` score into a potential uplift in the company's valuation multiple.
+
+$$ \text{Multiple}_j = \text{Multiple}_{base,k} + \delta \cdot (\text{Exit-AI-R}_j / 100) $$
+where:
+*   $\text{Multiple}_{base,k}$: The baseline industry valuation multiple for industry $k$, representing the average multiple for companies in that sector without a specific AI premium.
+*   $\delta$: The `AI_PremiumCoefficient`, which is a scaling factor that determines how much each percentage point of the `Exit-AI-R` score contributes to an additive premium on the baseline valuation multiple.
+
+The sum of $w_1, w_2, w_3$ should ideally be around 1 to represent a weighted average. The application provides a warning if the sum significantly deviates.
+
+### `calculate_exit_readiness_and_valuation` Function
+
+This function computes the `Exit_AI_R_Score` based on the provided weights and then calculates the `AI_Premium_Multiple_Additive` and the `Projected_Exit_Multiple`.
 
 ```python
+@st.cache_data(ttl="2h")
 def calculate_exit_readiness_and_valuation(df, w1=0.35, w2=0.40, w3=0.25):
-    """
-    Calculates Exit-AI-R Score and Projected Exit Multiple.
-    """
-    df_copy = df.copy()
+    if df.empty:
+        return df.assign(Exit_AI_R_Score=0.0, AI_Premium_Multiple_Additive=0.0, Projected_Exit_Multiple=0.0)
+    
+    df_copy = df.copy() 
     df_copy['Exit_AI_R_Score'] = (
         w1 * df_copy['Visible'] + w2 * df_copy['Documented'] + w3 * df_copy['Sustainable']
     )
     df_copy['Exit_AI_R_Score'] = np.clip(df_copy['Exit_AI_R_Score'], 0, 100)
-
-    # Multiple_j = Multiple_base,k + AI Premium Coefficient * Exit-AI-R_j/100
+    
     df_copy['AI_Premium_Multiple_Additive'] = df_copy['AI_PremiumCoefficient'] * df_copy['Exit_AI_R_Score'] / 100
     df_copy['Projected_Exit_Multiple'] = df_copy['BaselineMultiple'] + df_copy['AI_Premium_Multiple_Additive']
+    
     return df_copy
 ```
 
-1.  **Exit-AI-R Score:**
-    $$ \text{Exit-AI-R}_j = w_1 \cdot \text{Visible}_j + w_2 \cdot \text{Documented}_j + w_3 \cdot \text{Sustainable}_j $$
-    This score quantifies how well a company's AI capabilities are positioned to attract buyers and command a premium.
-    *   $\text{Visible}_j$: **Visible AI Capabilities** (e.g., product features, tech stack).
-    *   $\text{Documented}_j$: **Documented AI Impact** (e.g., ROI reports, IP).
-    *   $\text{Sustainable}_j$: **Sustainable AI Capabilities** (e.g., talent pipeline, scalable infrastructure).
-    *   $w_1, w_2, w_3$: **Weighting Factors**. These configurable weights prioritize different aspects of AI capability that buyers might value most.
+### Interactive Parameter Adjustment and Visualization
 
-2.  **Multiple Attribution Model (Projected Exit Multiple):**
-    $$ \text{Projected Exit Multiple}_j = \text{BaselineMultiple}_{k} + \text{AI Premium Coefficient} \cdot \text{Exit-AI-R}_j/100 $$
-    This model translates the `Exit-AI-R Score` into a potential uplift on the company's `BaselineMultiple`. The `AI Premium Coefficient` acts as a sensitivity factor, showing how much the exit multiple is boosted by a higher Exit-AI-R score.
-
-### Interacting with the Application (Page 7)
-
-Navigate to "7. Exit-Readiness & Valuation" in the sidebar.
-You will find `st.slider` widgets to adjust the weighting factors for the Exit-AI-R score:
-*   **Weight for Visible AI Capabilities ($w_1$):** (e.g., default 0.35)
-*   **Weight for Documented AI Impact ($w_2$):** (e.g., default 0.40)
-*   **Weight for Sustainable AI Capabilities ($w_3$):** (e.g., default 0.25)
-
-Clicking **"Recalculate Exit-Readiness & Valuation"** re-computes the scores and projected multiples based on your adjusted weights.
+On the "7. Exit-Readiness & Valuation" page:
+*   **Weight sliders ($w_1, w_2, w_3$):** Adjust these to reflect which aspects of AI capabilities (Visible, Documented, Sustainable) are most important for your exit strategy.
+*   **"Recalculate Exit-Readiness & Valuation" button:** Re-computes the scores and multiples based on the adjusted weights.
 
 The page then displays:
-*   **Latest Quarter's Exit-Readiness and Projected Valuation Impact Table:** A table showing `CompanyName`, `Exit_AI_R_Score`, `BaselineMultiple`, `AI_Premium_Multiple_Additive`, and `Projected_Exit_Multiple`.
-*   **Scatter Plot: Exit-AI-R Score vs. Projected Exit Multiple:** This `plotly.express.scatter` plot visualizes the relationship.
-    *   `x-axis`: `Exit_AI_R_Score`
-    *   `y-axis`: `Projected_Exit_Multiple`
-    *   `color`: `Industry`
-    *   `size`: `Attributed_EBITDA_Impact_Pct` (showing companies with strong AI readiness and financial performance).
-    *   Company names are added as text labels using `go.Scatter` with `mode='text'`.
+*   **Latest Quarter's Exit-Readiness and Projected Valuation Impact Table:** A `st.dataframe` showing `CompanyName`, `Industry`, `Exit_AI_R_Score`, `BaselineMultiple`, `AI_Premium_Multiple_Additive`, and `Projected_Exit_Multiple`, sorted by projected multiple.
+*   **Exit-AI-R Score vs. Projected Exit Multiple (Scatter Plot):** A `seaborn.scatterplot` plots `Exit_AI_R_Score` (x-axis) against `Projected_Exit_Multiple` (y-axis). Points are sized by `Attributed_EBITDA_Impact_Pct` and colored by `Industry`. Each company is labeled directly on the plot for easy identification.
 
-    ```python
-    # Example plot code snippet
-    fig = px.scatter(
-        latest_quarter_df,
-        x='Exit_AI_R_Score',
-        y='Projected_Exit_Multiple',
-        color='Industry',
-        size='Attributed_EBITDA_Impact_Pct',
-        # ... other parameters ...
-    )
-    # Add company names as text labels
-    for _, row in latest_quarter_df.iterrows():
-        fig.add_trace(go.Scatter(mode='text', text=[row['CompanyName']], ...))
-    st.plotly_chart(fig, use_container_width=True)
-    
+This visualization provides a clear picture of which companies are best positioned for an AI-driven exit premium and helps identify areas for improvement in their AI story. This data is critical for developing a compelling exit narrative and maximizing valuation multiples during divestment.
